@@ -166,13 +166,13 @@ public:
             table.resize(2 * (cur_size + 1));
             rebuild();
         } else {
-            size_t i = hasher(elem.first) % table.size();
-            typename list<pair<const KeyType, ValueType>>::iterator help = elems.insert(table[i].first, elem);
-            if (table[i].second == elems.end()) {
-                table[i].first = help;
-                table[i].second = help;
+            size_t hashed_key = hasher(elem.first) % table.size();
+            typename list<pair<const KeyType, ValueType>>::iterator help = elems.insert(table[hashed_key].first, elem);
+            if (table[hashed_key].second == elems.end()) {
+                table[hashed_key].first = help;
+                table[hashed_key].second = help;
             } else {
-                table[i].first = help;
+                table[hashed_key].first = help;
             }
         }
     }
@@ -181,40 +181,40 @@ public:
         if (table.size() == 0) {
             return;
         }
-        size_t i = hasher(key) % table.size();
-        if (table[i].second == elems.end()) {
+        size_t hashed_key = hasher(key) % table.size();
+        if (table[hashed_key].second == elems.end()) {
             return;
         }
-        if (table[i].second == table[i].first) {
-            if (table[i].second->first == key) {
-                elems.erase(table[i].second);
-                table[i].second = elems.end();
-                table[i].first = elems.end();
+        if (table[hashed_key].second == table[hashed_key].first) {
+            if (table[hashed_key].second->first == key) {
+                elems.erase(table[hashed_key].second);
+                table[hashed_key].second = elems.end();
+                table[hashed_key].first = elems.end();
                 count--;
                 return;
             } else {
                 return;
             }
         }
-        auto it = table[i].first;
+        auto it = table[hashed_key].first;
         it++;
-        for (; it != table[i].second; it++) {
+        for (; it != table[hashed_key].second; it++) {
             if (it->first == key) {
                 elems.erase(it);
                 count--;
                 return;
             }
         }
-        if (table[i].first->first == key) {
-            auto it = elems.erase(table[i].first);
+        if (table[hashed_key].first->first == key) {
+            auto it = elems.erase(table[hashed_key].first);
             count--;
-            table[i].first = it;
+            table[hashed_key].first = it;
         }
-        if (table[i].second->first == key) {
-            auto it = elems.erase(table[i].second);
+        if (table[hashed_key].second->first == key) {
+            auto it = elems.erase(table[hashed_key].second);
             count--;
             it--;
-            table[i].second = it;
+            table[hashed_key].second = it;
         }
     }
 
@@ -235,18 +235,17 @@ public:
         if (count == 0) {
             return end();
         }
-        size_t i = hasher(key) % table.size();
-
-        if (table[i].second == elems.end()) {
+        size_t hashed_key = hasher(key) % table.size();
+        if (table[hashed_key].second == elems.end()) {
             return end();
         }
-        for (auto it = table[i].first; it != table[i].second; it++) {
+        for (auto it = table[hashed_key].first; it != table[hashed_key].second; it++) {
             if (it->first == key) {
                 return iterator(it);
             }
         }
-        if (table[i].second->first == key) {
-            return iterator(table[i].second);
+        if (table[hashed_key].second->first == key) {
+            return iterator(table[hashed_key].second);
         }
         return end();
     }
@@ -254,17 +253,17 @@ public:
         if (count == 0) {
             return end();
         }
-        size_t i = hasher(key) % table.size();
-        if (table[i].second == elems.end()) {
+        size_t hashed_key = hasher(key) % table.size();
+        if (table[hashed_key].second == elems.end()) {
             return end();
         }
-        for (auto it = table[i].first; it != table[i].second; it++) {
+        for (auto it = table[hashed_key].first; it != table[hashed_key].second; it++) {
             if (it->first == key) {
                 return const_iterator(it);
             }
         }
-        if (table[i].second->first == key) {
-            return const_iterator(table[i].second);
+        if (table[hashed_key].second->first == key) {
+            return const_iterator(table[hashed_key].second);
         }
         return end();
     }
@@ -273,27 +272,27 @@ public:
         if (find(key) == elems.end()) {
             insert({key, ValueType()});
         }
-        size_t i = hasher(key) % table.size();
-        for (auto it = table[i].first; it != table[i].second; it++) {
+        size_t hashed_key = hasher(key) % table.size();
+        for (auto it = table[hashed_key].first; it != table[hashed_key].second; it++) {
             if (it->first == key) {
                 return it->second;
             }
         }
-        return table[i].second->second;
+        return table[hashed_key].second->second;
     }
 
     const ValueType& at(const KeyType& key) const {
         if (table.size() == 0) {
             throw std::out_of_range("");
         }
-        size_t i = hasher(key) % table.size();
-        for (auto it = table[i].first; it != table[i].second; it++) {
+        size_t hashed_key = hasher(key) % table.size();
+        for (auto it = table[hashed_key].first; it != table[hashed_key].second; it++) {
             if (it->first == key) {
                 return it->second;
             }
         }
-        if (table[i].second->first == key) {
-            return table[i].second->second;
+        if (table[hashed_key].second->first == key) {
+            return table[hashed_key].second->second;
         } else {
             throw std::out_of_range("");
         }
