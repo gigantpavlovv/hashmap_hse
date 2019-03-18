@@ -30,7 +30,7 @@ public:
     public:
         iterator() {
         }
-        iterator(typename list<pair<const KeyType, ValueType>>::iterator _it) : it(_it) {
+        iterator(typename list<pair<const KeyType, ValueType>>::iterator it) : it(it) {
         }
         iterator& operator++() {
             it++;
@@ -63,12 +63,14 @@ public:
             return it;
         }
     };
+
+
     class const_iterator{
         typename list<pair<const KeyType, ValueType>>::const_iterator it;
     public:
         const_iterator() {
         }
-        const_iterator(typename list<pair<const KeyType, ValueType>>::const_iterator _it) : it(_it) {
+        const_iterator(typename list<pair<const KeyType, ValueType>>::const_iterator it) : it(it) {
         }
         const_iterator& operator++() {
             it++;
@@ -101,6 +103,8 @@ public:
             return it;
         }
     };
+
+
     HashMap() : count(0) {
     }
     template <typename InputIterator>
@@ -115,20 +119,22 @@ public:
             insert(elem);
         }
     }
-    HashMap(Hash _hasher) : hasher(_hasher), count(0) {
+    HashMap(Hash hasher) : hasher(hasher), count(0) {
     }
     template <typename InputIterator>
-    HashMap(InputIterator begin, InputIterator end, Hash _hasher) : hasher(_hasher), count(0) {
+    HashMap(InputIterator begin, InputIterator end, Hash hasher) : hasher(hasher), count(0) {
         while(begin != end) {
             insert(*begin);
             begin++;
         }
     }
-    HashMap(const initializer_list<pair<const KeyType, ValueType>> &list, Hash _hasher) : hasher(_hasher), count(0) {
+    HashMap(const initializer_list<pair<const KeyType, ValueType>> &list, Hash hasher) : hasher(hasher), count(0) {
         for (auto elem: list) {
             insert(elem);
         }
     }
+
+
     HashMap& operator=(const HashMap& b) {
         hasher = b.hasher;
         for (auto elem : b) {
@@ -136,15 +142,19 @@ public:
         }
         return *this;
     }
+
     size_t size() const {
         return count;
     }
+
     bool empty() const {
         return (count == 0);
     }
+
     const Hash& hash_function() const {
         return hasher;
     }
+
     void insert(const pair<const KeyType, ValueType>& elem) {
         if (find(elem.first) != elems.end()) {
             return;
@@ -166,21 +176,16 @@ public:
             }
         }
     }
+
     void erase(const KeyType key) {
-        //cout << "Y-1" << endl;
         if (table.size() == 0) {
-            //cout << "Y0" << endl;
             return;
         }
         size_t i = hasher(key) % table.size();
-        //cout << table[i].first->first << endl;
-        //cout << table[i].second->first << endl;
         if (table[i].second == elems.end()) {
-            //cout << "Y1" << endl;
             return;
         }
         if (table[i].second == table[i].first) {
-            //cout << "Y2" << endl;
             if (table[i].second->first == key) {
                 elems.erase(table[i].second);
                 table[i].second = elems.end();
@@ -195,27 +200,24 @@ public:
         it++;
         for (; it != table[i].second; it++) {
             if (it->first == key) {
-                //cout << "Y" << endl;
                 elems.erase(it);
                 count--;
                 return;
             }
         }
-        //cout << table[i].first->first << endl;
         if (table[i].first->first == key) {
-            //cout << "U0" << endl;
             auto it = elems.erase(table[i].first);
             count--;
             table[i].first = it;
         }
         if (table[i].second->first == key) {
-            //cout << "U!" << endl;
             auto it = elems.erase(table[i].second);
             count--;
             it--;
             table[i].second = it;
         }
     }
+
     iterator begin() {
         return iterator(elems.begin());
     }
@@ -228,8 +230,8 @@ public:
     const_iterator begin() const {
         return const_iterator(elems.begin());
     }
+
     iterator find(const KeyType& key) {
-        //cout << "X" << endl;
         if (count == 0) {
             return end();
         }
@@ -240,11 +242,9 @@ public:
         }
         for (auto it = table[i].first; it != table[i].second; it++) {
             if (it->first == key) {
-                //cout << "Y" << endl;
                 return iterator(it);
             }
         }
-        //cout << "X " << table[i].second->first << ' ' << table[i].second->second << endl;
         if (table[i].second->first == key) {
             return iterator(table[i].second);
         }
@@ -268,6 +268,7 @@ public:
         }
         return end();
     }
+
     ValueType& operator[](const KeyType& key) {
         if (find(key) == elems.end()) {
             insert({key, ValueType()});
@@ -280,6 +281,7 @@ public:
         }
         return table[i].second->second;
     }
+
     const ValueType& at(const KeyType& key) const {
         if (table.size() == 0) {
             throw std::out_of_range("");
@@ -296,6 +298,7 @@ public:
             throw std::out_of_range("");
         }
     }
+
     void clear() {
         list<pair<KeyType, ValueType>> save;
         for (auto elem : elems) {
