@@ -6,6 +6,8 @@ using namespace std;
 
 template<typename KeyType, typename ValueType, typename Hash = std::hash<KeyType> >
 class HashMap{
+    size_t ALPHA = 2;
+    size_t MIN_SIZE = 1;
     Hash hasher = Hash();
     list<pair<const KeyType, ValueType>> elems;
     vector<pair<typename list<pair<const KeyType, ValueType>>::iterator, typename list<pair<const KeyType, ValueType>>::iterator>> table;
@@ -30,7 +32,7 @@ public:
     public:
         iterator() {
         }
-        iterator(typename list<pair<const KeyType, ValueType>>::iterator _it) : it(_it) {
+        iterator(typename list<pair<const KeyType, ValueType>>::iterator it) : it(it) {
         }
         iterator& operator++() {
             it++;
@@ -63,12 +65,14 @@ public:
             return it;
         }
     };
+
+
     class const_iterator{
         typename list<pair<const KeyType, ValueType>>::const_iterator it;
     public:
         const_iterator() {
         }
-        const_iterator(typename list<pair<const KeyType, ValueType>>::const_iterator _it) : it(_it) {
+        const_iterator(typename list<pair<const KeyType, ValueType>>::const_iterator it) : it(it) {
         }
         const_iterator& operator++() {
             it++;
@@ -101,6 +105,8 @@ public:
             return it;
         }
     };
+
+
     HashMap() : count(0) {
     }
     template <typename InputIterator>
@@ -115,20 +121,22 @@ public:
             insert(elem);
         }
     }
-    HashMap(Hash _hasher) : hasher(_hasher), count(0) {
+    HashMap(Hash hasher) : hasher(hasher), count(0) {
     }
     template <typename InputIterator>
-    HashMap(InputIterator begin, InputIterator end, Hash _hasher) : hasher(_hasher), count(0) {
+    HashMap(InputIterator begin, InputIterator end, Hash hasher) : hasher(hasher), count(0) {
         while(begin != end) {
             insert(*begin);
             begin++;
         }
     }
-    HashMap(const initializer_list<pair<const KeyType, ValueType>> &list, Hash _hasher) : hasher(_hasher), count(0) {
+    HashMap(const initializer_list<pair<const KeyType, ValueType>> &list, Hash hasher) : hasher(hasher), count(0) {
         for (auto elem: list) {
             insert(elem);
         }
     }
+
+
     HashMap& operator=(const HashMap& b) {
         hasher = b.hasher;
         for (auto elem : b) {
@@ -136,15 +144,19 @@ public:
         }
         return *this;
     }
+
     size_t size() const {
         return count;
     }
+
     bool empty() const {
         return (count == 0);
     }
+
     const Hash& hash_function() const {
         return hasher;
     }
+
     void insert(const pair<const KeyType, ValueType>& elem) {
         if (find(elem.first) != elems.end()) {
             return;
@@ -153,69 +165,61 @@ public:
         if (count > table.size() * 0.75) {
             elems.push_back(elem);
             size_t cur_size = table.size();
-            table.resize(2 * (cur_size + 1));
+            table.resize(ALPHA * (cur_size + MIN_SIZE));
             rebuild();
         } else {
-            size_t i = hasher(elem.first) % table.size();
-            typename list<pair<const KeyType, ValueType>>::iterator help = elems.insert(table[i].first, elem);
-            if (table[i].second == elems.end()) {
-                table[i].first = help;
-                table[i].second = help;
+            size_t hashed_key = hasher(elem.first) % table.size();
+            typename list<pair<const KeyType, ValueType>>::iterator help = elems.insert(table[hashed_key].first, elem);
+            if (table[hashed_key].second == elems.end()) {
+                table[hashed_key].first = help;
+                table[hashed_key].second = help;
             } else {
-                table[i].first = help;
+                table[hashed_key].first = help;
             }
         }
     }
+
     void erase(const KeyType key) {
-        //cout << "Y-1" << endl;
         if (table.size() == 0) {
-            //cout << "Y0" << endl;
             return;
         }
-        size_t i = hasher(key) % table.size();
-        //cout << table[i].first->first << endl;
-        //cout << table[i].second->first << endl;
-        if (table[i].second == elems.end()) {
-            //cout << "Y1" << endl;
+        size_t hashed_key = hasher(key) % table.size();
+        if (table[hashed_key].second == elems.end()) {
             return;
         }
-        if (table[i].second == table[i].first) {
-            //cout << "Y2" << endl;
-            if (table[i].second->first == key) {
-                elems.erase(table[i].second);
-                table[i].second = elems.end();
-                table[i].first = elems.end();
+        if (table[hashed_key].second == table[hashed_key].first) {
+            if (table[hashed_key].second->first == key) {
+                elems.erase(table[hashed_key].second);
+                table[hashed_key].second = elems.end();
+                table[hashed_key].first = elems.end();
                 count--;
                 return;
             } else {
                 return;
             }
         }
-        auto it = table[i].first;
+        auto it = table[hashed_key].first;
         it++;
-        for (; it != table[i].second; it++) {
+        for (; it != table[hashed_key].second; it++) {
             if (it->first == key) {
-                //cout << "Y" << endl;
                 elems.erase(it);
                 count--;
                 return;
             }
         }
-        //cout << table[i].first->first << endl;
-        if (table[i].first->first == key) {
-            //cout << "U0" << endl;
-            auto it = elems.erase(table[i].first);
+        if (table[hashed_key].first->first == key) {
+            auto it = elems.erase(table[hashed_key].first);
             count--;
-            table[i].first = it;
+            table[hashed_key].first = it;
         }
-        if (table[i].second->first == key) {
-            //cout << "U!" << endl;
-            auto it = elems.erase(table[i].second);
+        if (table[hashed_key].second->first == key) {
+            auto it = elems.erase(table[hashed_key].second);
             count--;
             it--;
-            table[i].second = it;
+            table[hashed_key].second = it;
         }
     }
+
     iterator begin() {
         return iterator(elems.begin());
     }
@@ -228,25 +232,22 @@ public:
     const_iterator begin() const {
         return const_iterator(elems.begin());
     }
+
     iterator find(const KeyType& key) {
-        //cout << "X" << endl;
         if (count == 0) {
             return end();
         }
-        size_t i = hasher(key) % table.size();
-
-        if (table[i].second == elems.end()) {
+        size_t hashed_key = hasher(key) % table.size();
+        if (table[hashed_key].second == elems.end()) {
             return end();
         }
-        for (auto it = table[i].first; it != table[i].second; it++) {
+        for (auto it = table[hashed_key].first; it != table[hashed_key].second; it++) {
             if (it->first == key) {
-                //cout << "Y" << endl;
                 return iterator(it);
             }
         }
-        //cout << "X " << table[i].second->first << ' ' << table[i].second->second << endl;
-        if (table[i].second->first == key) {
-            return iterator(table[i].second);
+        if (table[hashed_key].second->first == key) {
+            return iterator(table[hashed_key].second);
         }
         return end();
     }
@@ -254,48 +255,51 @@ public:
         if (count == 0) {
             return end();
         }
-        size_t i = hasher(key) % table.size();
-        if (table[i].second == elems.end()) {
+        size_t hashed_key = hasher(key) % table.size();
+        if (table[hashed_key].second == elems.end()) {
             return end();
         }
-        for (auto it = table[i].first; it != table[i].second; it++) {
+        for (auto it = table[hashed_key].first; it != table[hashed_key].second; it++) {
             if (it->first == key) {
                 return const_iterator(it);
             }
         }
-        if (table[i].second->first == key) {
-            return const_iterator(table[i].second);
+        if (table[hashed_key].second->first == key) {
+            return const_iterator(table[hashed_key].second);
         }
         return end();
     }
+
     ValueType& operator[](const KeyType& key) {
         if (find(key) == elems.end()) {
             insert({key, ValueType()});
         }
-        size_t i = hasher(key) % table.size();
-        for (auto it = table[i].first; it != table[i].second; it++) {
+        size_t hashed_key = hasher(key) % table.size();
+        for (auto it = table[hashed_key].first; it != table[hashed_key].second; it++) {
             if (it->first == key) {
                 return it->second;
             }
         }
-        return table[i].second->second;
+        return table[hashed_key].second->second;
     }
+
     const ValueType& at(const KeyType& key) const {
         if (table.size() == 0) {
             throw std::out_of_range("");
         }
-        size_t i = hasher(key) % table.size();
-        for (auto it = table[i].first; it != table[i].second; it++) {
+        size_t hashed_key = hasher(key) % table.size();
+        for (auto it = table[hashed_key].first; it != table[hashed_key].second; it++) {
             if (it->first == key) {
                 return it->second;
             }
         }
-        if (table[i].second->first == key) {
-            return table[i].second->second;
+        if (table[hashed_key].second->first == key) {
+            return table[hashed_key].second->second;
         } else {
             throw std::out_of_range("");
         }
     }
+
     void clear() {
         list<pair<KeyType, ValueType>> save;
         for (auto elem : elems) {
