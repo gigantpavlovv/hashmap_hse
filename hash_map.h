@@ -6,6 +6,8 @@ using namespace std;
 
 template<typename KeyType, typename ValueType, typename Hash = std::hash<KeyType> >
 class HashMap{
+    size_t ALPHA = 2;
+    size_t MIN_SIZE = 1;
     Hash hasher = Hash();
     list<pair<const KeyType, ValueType>> elems;
     vector<pair<typename list<pair<const KeyType, ValueType>>::iterator, typename list<pair<const KeyType, ValueType>>::iterator>> table;
@@ -163,7 +165,7 @@ public:
         if (count > table.size() * 0.75) {
             elems.push_back(elem);
             size_t cur_size = table.size();
-            table.resize(2 * (cur_size + 1));
+            table.resize(ALPHA * (cur_size + MIN_SIZE));
             rebuild();
         } else {
             size_t hashed_key = hasher(elem.first) % table.size();
